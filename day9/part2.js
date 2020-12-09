@@ -1,4 +1,5 @@
 var fs = require('fs');
+const { parse } = require('path');
 
 var input = fs.readFileSync('./input.txt', 'utf8').split('\r\n');
 
@@ -42,7 +43,40 @@ outer: for(var c = 0; c < input.length; c++) {
         }
         if (sum == result) {
             console.log(smallest + largest);
-            return;
+            break outer;
         }
     }
 }
+
+{
+    var start = 0;
+    var end = 0;
+
+    var sum = parseInt(input[start]);
+
+    while (true) {
+        if (sum == result) {
+            var largest = 0;
+            var smallest = Infinity;
+            for (var x = start; x <= end; x++) {
+                smallest = Math.min(parseInt(input[x]), smallest);
+                largest = Math.max(parseInt(input[x]), largest);
+            }
+            console.log(smallest+largest);
+            return;
+        } else {
+            if (sum < result) {
+                // add one to the end
+                end++;
+                sum += parseInt(input[end]);
+            } else {
+                if (sum > result) {
+                    // knock one off the front
+                    sum -= parseInt(input[start]);
+                    start++;
+                }
+            }
+        }
+    }
+}
+
