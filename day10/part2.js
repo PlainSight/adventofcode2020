@@ -45,24 +45,14 @@ function check(i) {
 
 var result = 1;
 
-var lastFork = 0;
-
 for(var i in parents) {
     if (parents[i]) {
 
-        if (parents[i].length == 1 && lastFork > 0) {
+        if (parents[i].length == 1) {
             // work backwards from here
-            result *= check(lastFork);
-            lastFork = -1;
-        }
-
-        if (parents[i].length > 1) {
-            lastFork = i;
+            result *= check(parents[i][0]);
         }
     }
 }
 
 console.log(result);
-
-
-
