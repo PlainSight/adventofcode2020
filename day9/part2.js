@@ -1,5 +1,4 @@
 var fs = require('fs');
-const { parse } = require('path');
 
 var input = fs.readFileSync('./input.txt', 'utf8').split('\r\n');
 
