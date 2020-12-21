@@ -18,8 +18,6 @@ for (var i in input) {
     });
 }
 
-//console.log(foodItems);
-
 var couldContainAllergens = {};
 var allIngredients = {};
 
@@ -47,8 +45,6 @@ for (var fi in foodItems) {
     }
 }
 
-console.log(couldContainAllergens);
-
 var allergensForFood = {};
 
 while (Object.values(couldContainAllergens).filter(a => a.length > 0).length > 0) {
@@ -63,7 +59,5 @@ while (Object.values(couldContainAllergens).filter(a => a.length > 0).length > 0
         couldContainAllergens[k] = v.filter(i => i != ingredient);
     }
 }
-
-console.log(allergensForFood);
 
 console.log(Object.entries(allergensForFood).sort((a, b) => a[0].localeCompare(b[0])).map(e => e[1]).join(','));
