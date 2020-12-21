@@ -18,8 +18,6 @@ for (var i in input) {
     });
 }
 
-//console.log(foodItems);
-
 var couldContainAllergens = {};
 var allIngredients = {};
 
