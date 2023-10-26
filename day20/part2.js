@@ -234,7 +234,6 @@ for(var y = maxy; y >= miny; y--) {
 for (var i = 0; i < 8; i++) {
     tiles[0].rotation = i % 4;
     tiles[0].flipped = (i / 2) >= 2;
-    console.log('r', tiles[0].rotation, tiles[0].flipped);
     for (var y = 0; y <= tdim; y++) {
         var str = '';
         for(var x = 0; x <= tdim; x++) {
