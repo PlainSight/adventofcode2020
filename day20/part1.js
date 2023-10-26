@@ -134,20 +134,3 @@ for (var t in tiles) {
 console.log(result);
 
 console.log(tiles.length, Object.values(bordersByShared).filter(v => v == 1).length, Object.values(bordersByShared).filter(v => v == 2).length);
-
-// outer: while(tiles.filter(t => !t.placed)) {
-//     var placedTiles = tiles.filter(t => t.placed);
-//     var unplacedTiles = tiles.filter(t => !t.placed);
-
-//     if (placedTiles.length == 0) {
-//         tiles[0].placed = true;
-//     } else {
-//         var toHaveNeighbour = placedTiles.filter(pt => pt.borderedBy.includes(false))[0];
-
-//         for (var t in unplacedTiles) {
-//             var tile = unplacedTiles[t];
-
-//             if (tile.borders.includes())
-//         }
-//     }
-// }
