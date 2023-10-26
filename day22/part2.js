@@ -10,14 +10,24 @@ cards2.shift();
 var freshdeck1 = cards1.map(m => parseInt(m)).reverse();
 var freshdeck2 = cards2.map(m => parseInt(m)).reverse();
 
+var knownGames = new Map();
+
 function playGame(deck1, deck2, top) {
-    var knownOrders = {};
+    var d1Top = deck1.length-1;
+    var d1Length = deck1.length;
+
+    var d2Top = deck2.length-1;
+    var d2Length = deck2.length;
+
+    var knownOrders = new Map();
     
     while (deck1.length > 0 && deck2.length > 0) {
-        if (knownOrders[deck1.join(',')+':'+deck2.join(',')]) {
-            return 1; // player 1 wins
-        } else {
-            knownOrders[deck1.join(',')+':'+deck2.join(',')] = true;
+        if (!top) {
+            if (!!knownOrders.get(deck1.join(',')+':'+deck2.join(','))) {
+                return 1; // player 1 wins
+            } else {
+                knownOrders.set(deck1.join(',')+':'+deck2.join(','), true);
+            }
         }
 
         var p1card = deck1.pop();
@@ -33,7 +43,13 @@ function playGame(deck1, deck2, top) {
             var freshp1deck = deck1.slice(deck1.length-p1card, deck1.length).map(m => m);
             var freshp2deck = deck2.slice(deck2.length-p2card, deck2.length).map(m => m);
 
-            winningPlayerOfRound = playGame(freshp1deck, freshp2deck, false)
+            // non cached version
+            //winningPlayerOfRound = playGame(freshp1deck, freshp2deck, false);
+
+            var cacheKey = freshp1deck.join(',')+':'+freshp2deck.join(',');
+            var cachedResult = knownGames.get(cacheKey);
+            winningPlayerOfRound = !!cachedResult ? cachedResult : playGame(freshp1deck, freshp2deck, false);
+            knownGames.set(cacheKey, winningPlayerOfRound);
         } else {
             if (p1card < p2card) {
                 winningPlayerOfRound = 2;
@@ -70,6 +86,7 @@ function playGame(deck1, deck2, top) {
 
         return finalScore;
     } else {
+        // set winner for all known states in this game
         return deck1.length > 0 ? 1 : 2;
     }
 }
