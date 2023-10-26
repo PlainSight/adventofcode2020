@@ -13,6 +13,7 @@ var freshdeck2 = cards2.map(m => parseInt(m)).reverse();
 var knownGames = new Map();
 
 function playGame(deck1, deck2, top) {
+<<<<<<< HEAD
     var d1Top = deck1.length-1;
     var d1Length = deck1.length;
 
@@ -28,6 +29,20 @@ function playGame(deck1, deck2, top) {
             } else {
                 knownOrders.set(deck1.join(',')+':'+deck2.join(','), true);
             }
+=======
+	var bestCardInDeck1 = Math.max(...deck1);
+	if (bestCardInDeck1 > Math.max(...deck2) && bestCardInDeck1 > (deck1.length + deck2.length)) {
+		return 1;
+	}
+	
+    var knownOrders = new Map();
+    
+    while (deck1.length > 0 && deck2.length > 0) {
+        if (knownOrders.get(deck1.join(',')+':'+deck2.join(','))) {
+            return 1; // player 1 wins
+        } else {
+            knownOrders.set(deck1.join(',')+':'+deck2.join(','), true);
+>>>>>>> f520b174f9feb0501b2b34ebc2463a56af2f87a2
         }
 
         var p1card = deck1.pop();
@@ -43,6 +58,7 @@ function playGame(deck1, deck2, top) {
             var freshp1deck = deck1.slice(deck1.length-p1card, deck1.length).map(m => m);
             var freshp2deck = deck2.slice(deck2.length-p2card, deck2.length).map(m => m);
 
+<<<<<<< HEAD
             // non cached version
             //winningPlayerOfRound = playGame(freshp1deck, freshp2deck, false);
 
@@ -50,6 +66,18 @@ function playGame(deck1, deck2, top) {
             var cachedResult = knownGames.get(cacheKey);
             winningPlayerOfRound = !!cachedResult ? cachedResult : playGame(freshp1deck, freshp2deck, false);
             knownGames.set(cacheKey, winningPlayerOfRound);
+=======
+			var cacheKey = freshp1deck.join(',')+':'+freshp2deck.join(',');
+			var cacheEntry = knownGames.get(cacheKey);
+			
+			if (cacheEntry) {
+				winningPlayerOfRound = cacheEntry;
+			} else {
+				winningPlayerOfRound = playGame(freshp1deck, freshp2deck, false);
+				knownGames.set(cacheKey, winningPlayerOfRound);
+			}
+            
+>>>>>>> f520b174f9feb0501b2b34ebc2463a56af2f87a2
         } else {
             if (p1card < p2card) {
                 winningPlayerOfRound = 2;
