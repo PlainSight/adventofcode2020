@@ -1,8 +1,10 @@
 var fs = require('fs');
 
-var input = fs.readFileSync('./sample.txt', 'utf8').split('\r\n\r\n');
+var input = fs.readFileSync('./input.txt', 'utf8').split('\r\n\r\n');
 
 var tiles = [];
+
+var trim = 2;
 
 function rotateArray(ar, num) {
     for (var n = 0; n < num; n++) {
@@ -43,7 +45,7 @@ for(var i in input) {
     var borders = [];
     var bordersPolarity = [];
 
-    data = t.slice(2, 10).map(s => s.split('').slice(1, 9));
+    data = t.slice(2 - (!trim ? 1 : 0), 10 + (!trim ? 1 : 0)).map(s => s.split('').slice(1 - (!trim ? 1 : 0), 9 + (!trim ? 1 : 0)));
 
     ss.forEach((sss, ssi) => {
         var x = sss[0];
@@ -134,7 +136,7 @@ function calculateRotate(tile1, tile2, border) {
     if (rotate != 0) {
         tile2.borders = rotateArray(tile2.borders, rotate);
         tile2.bordersPolarity = rotateArray(tile2.bordersPolarity, rotate);
-        console.log('rotating tile ', tile2.order, tile2.id);
+        console.log('rotating tile ', tile2.order, 'by', rotate, tile2.id);
     }
 }
 
@@ -149,9 +151,9 @@ tilesWithTwoBorders[0].y = 0;
 tilesWithTwoBorders[0].placed = true;
 
 var ds = [
-    [0, 1],
-    [1, 0],
     [0, -1],
+    [1, 0],
+    [0, 1],
     [-1, 0]
 ];
 
@@ -193,32 +195,34 @@ var maxy = Math.max(...tiles.map(t => t.y));
 
 var tdim = tiles[0].data.length - 1;
 
-console.log(tdim);
+var ldim = tdim+1;
 
 function getAt(tile, x, y) {
-    var ss = [[0, 0], [tdim, 0], [tdim, tdim], [0, tdim]];
+    var ss = [[0, 0], [0, tdim], [tdim, tdim], [tdim, 0]];
     var ssd = [
         [[1, 0], [0, 1]], 
-        [[0, -1], [1, 0]], 
-        [[-1, 0], [0, -1]], 
-        [[0, 1], [-1, 0]]
+        [[0, 1], [-1, 0]],
+        [[-1, 0], [0, -1]],
+        [[0, -1], [1, 0]] 
     ];
 
-    var xx = ss[tile.rotation][0] + (ssd[tile.rotation][0][0]*x) + (ssd[tile.rotation][0][1]*y);
-    var yy = ss[tile.rotation][1] + (ssd[tile.rotation][1][0]*x) + (ssd[tile.rotation][1][1]*y);
+    var rot = tile.rotation;
 
     if (tile.flipped) {
-        yy = tdim - yy;
+        y = tdim - y;
+        rot = (4 - rot) % 4;
     }
 
-    //console.log('g', yy, xx);
+    
+    var xx = ss[rot][0] + (ssd[rot][0][0]*x) + (ssd[rot][0][1]*y);
+    var yy = ss[rot][1] + (ssd[rot][1][0]*x) + (ssd[rot][1][1]*y);
 
     return tile.data[yy][xx];
 }
 
 console.log(`${minx} -- ${maxy}`);
 
-for(var y = maxy; y >= miny; y--) {
+for(var y = miny; y <= maxy; y++) {
     var str = `${y} `;
     for(var x = minx; x <= maxx; x++) {
         var ct = tiles.filter(t => t.x == x && t.y == y)[0];
@@ -231,14 +235,132 @@ for(var y = maxy; y >= miny; y--) {
     console.log(str);
 }
 
-for (var i = 0; i < 8; i++) {
-    tiles[0].rotation = i % 4;
-    tiles[0].flipped = (i / 2) >= 2;
-    for (var y = 0; y <= tdim; y++) {
-        var str = '';
-        for(var x = 0; x <= tdim; x++) {
-            str += getAt(tiles[0], x, y);
+// for (var i = 0; i < 8; i++) {
+//     tiles[0].rotation = i % 4;
+//     tiles[0].flipped = (i / 2) >= 2;
+//     for (var y = 0; y <= tdim; y++) {
+//         var str = '';
+//         for(var x = 0; x <= tdim; x++) {
+//             str += getAt(tiles[0], x, y);
+//         }
+//         console.log(str);
+//     }
+// }
+
+var tilesByIndex = tiles.reduce((a, c) => {
+    a[c.x+','+c.y] = c;
+    return a;
+}, {});
+
+function getAtGlobal(gx, gy, rot, flipped, max) {
+    var xx = 0;
+    var yy = 0;
+    {
+        var ss = [[0, 0], [0, max-1], [max-1, max-1], [max-1, 0]];
+        var ssd = [
+            [[1, 0], [0, 1]], 
+            [[0, 1], [-1, 0]],
+            [[-1, 0], [0, -1]],
+            [[0, -1], [1, 0]] 
+        ];
+
+        if (flipped) {
+            gy = (max-1) - gy;
         }
-        console.log(str);
+
+        xx = ss[rot][0] + (ssd[rot][0][0]*gx) + (ssd[rot][0][1]*gy);
+        yy = ss[rot][1] + (ssd[rot][1][0]*gx) + (ssd[rot][1][1]*gy);
+    }
+
+    var tx = Math.floor(xx/(ldim));
+    var ty = Math.floor(yy/(ldim));
+    return getAt(tilesByIndex[tx+','+ty], xx%ldim, yy%ldim);
+}
+
+var xmax = (maxx+1)*(ldim);
+var ymax = (maxy+1)*(ldim);
+
+var mask = `                  # 
+#    ##    ##    ###
+ #  #  #  #  #  #   `.split('\n').map(l => l.split(''));
+
+var bestCount = 0;
+
+for (var f = 0; f < 2; f++) {
+    for (var r = 0; r < 4; r++) {
+        var complete = [];
+        for (var y = 0; y < ymax; y++) {
+            if (trim == 0 && y % ldim == 0) {
+                complete.push([' ']);
+            }
+            var row = [];
+            for (var x = 0; x < xmax; x++) {
+                if (trim == 0 && x % ldim == 0) {
+                    row.push(' ');
+                }
+                row.push(getAtGlobal(x, y, r, f == 1, xmax));
+            }
+            complete.push(row);
+        }
+
+        if (trim == 0) {
+            complete.forEach(c => {
+                console.log(c.join(''));
+            });
+            console.log(' ');
+
+            return;
+        }
+
+        var found = false;
+
+        for(var y = 0; y < ymax; y++) {
+            for(var x = 0; x < xmax; x++) {
+
+                var misses = 0;
+
+                for(var yy = 0; yy < mask.length; yy++) {
+                    for(var xx = 0; xx < mask[0].length; xx++) {
+                        if (mask[yy][xx] == '#') {
+                            if ((y + yy) < ymax && (x + xx) < xmax && complete[y+yy][x+xx] == '#') {
+
+                            } else {
+                                misses++;
+                            }
+                        }
+                    }
+                }
+
+                if (misses == 0) {
+                    found = true;
+                    for(var yy = 0; yy < mask.length; yy++) {
+                        for(var xx = 0; xx < mask[0].length; xx++) {
+                            if (mask[yy][xx] == '#') {
+                                if (y + yy < ymax && x + xx < xmax && complete[y+yy][x+xx] == '#') {
+                                    complete[y+yy][x+xx] = 'O';
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        var count = complete.reduce((a, c) => {
+            return a + c.reduce((aa, cc) => {
+                return aa + (cc == '#' ? 1 : 0);
+            }, 0)
+        }, 0);
+
+        if (found) {
+            bestCount = count;
+
+            complete.forEach(c => {
+                console.log(c.join(''));
+            });
+            console.log(' ');
+        }
     }
 }
+
+console.log(bestCount);
