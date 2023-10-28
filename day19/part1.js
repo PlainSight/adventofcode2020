@@ -1,4 +1,3 @@
-const { match } = require('assert');
 var fs = require('fs');
 
 var input = fs.readFileSync('./input.txt', 'utf8').split('\r\n\r\n');
@@ -7,7 +6,6 @@ var rawRules = input[0].split('\r\n');
 var messages = input[1].split('\r\n');
 
 var rules = {};
-var reverseRules = {};
 
 for (var r in rawRules) {
     var rule = rawRules[r].split(':');
@@ -18,75 +16,46 @@ for (var r in rawRules) {
     rules[ruleId] = ruleParts;
 }
 
-for (var r in rules) {
-    var rule = rules[r];
+function checkRule(id, string, index) {
+    var rule = rules[id];
+    //console.log('checking rule ', rule, ' on ', string, 'at', index);
+    var successes = [];
+outer: for(var rr = 0; rr < rule.length; rr++) {
+        var option = rule[rr];
+        var lis = [ index ];
 
-    for (var rp in rule) {
-        var rulePart = rule[rp];
-
-        var key = k(rulePart);
-        reverseRules[key] = parseInt(r);
-    }
-}
-
-function rk(s) {
-    return s.split(',').map(m => parseInt(m));
-}
-
-function k(...vals) {
-    return vals.join(',');
-}
-
-var matches = 0;
-
-for (var m in messages) {
-    var message = messages[m].split('');
-
-    var P = new Map();
-
-    for (var s = 0; s < message.length; s++) {
-        for (var r in rules) {
-            var rule = rules[r];
-            if (rule[0][0] == message[s]) {
-                P.set(k(1, s, r), true);
+        for (var c = 0; c < option.length; c++) {
+            if (lis.length == 0) {
+                continue outer;
             }
-        }
-    }
-
-    for (var l = 2; l <= message.length; l++) { // length of strings
-        for (var s = 0; s <= message.length-l; s++) { // start point of substring of length l
-            for (var p = 1; p < l; p++) { // end point of substring of length l
-                for (var r in rules) {
-                    //console.log(l, '#', p, l-p, '#', s, s+p);
-
-                    var rule = rules[r];
-                    for (var rp in rule) {
-                        var rulePart = rule[rp];
-
-                        //console.log('checking rule', r, rulePart, 'against', )
-
-                        if (P.get(k(p, s, rulePart[0])) && P.get(k(l-p, s+p, rulePart[1]))) {
-                            P.set(k(l, s, r), true);
-                        }
+            var newlis = [];
+            lis.forEach(li => {
+                var cond = option[c];
+                if (/[ab]/.test(cond)) {
+                    if (string[li] == cond) {
+                        newlis.push(li+1);
                     }
+                } else {
+                    var res = checkRule(cond, string, li);
+                    newlis.push(...res);
                 }
-            }
+            });
+            lis = newlis;
         }
+
+        successes.push(...lis);
     }
 
-    //console.log(messages[m]);
-    console.log(rules);
-    //console.log(P);
+    //console.log('returning', successes);
 
-    if (P.get(k(message.length, 0, 0))) {
-        matches++;
-        console.log(m, matches);
-        //console.log(message, 'good');
-    } else {
-        console.log(m, matches);
-        //console.log(message, 'bad');
-    }
-
+    return successes;
 }
 
-console.log(matches);
+var goodMessages = 0;
+
+messages.forEach(m => {
+    goodMessages += checkRule(0, m, 0).includes(m.length) ? 1 : 0;
+    //console.log('RESULT', m,);
+});
+
+console.log(goodMessages);
